@@ -9,10 +9,11 @@
 #include <QRegExp>
 #include <QtSql>
 
-#define firs_value_num 48
+//Для генерации случайных чисел и символов
+#define firs_value_num 48 //ASCII код нуля
 #define last_value_num 10
 
-#define firs_value_symb 65
+#define firs_value_symb 65//ASCII код буквы А
 #define last_value_symb 25
 
 #define strLength 8
@@ -22,14 +23,6 @@ baseWidget::baseWidget(QWidget *parent) :
     ui(new Ui::baseWidget)
 {
     ui->setupUi(this);
-    QDir curdir;
-    curdir.setPath(curdir.currentPath());
-    QFileInfoList list = curdir.entryInfoList();
-    foreach(QFileInfo info, list){
-        QString fileName = info.fileName();
-        ui->dirList->addItem(fileName);
-    }
-
 
     connect(ui->showFileButton, &QPushButton::clicked, this, &baseWidget::showFile);
     connect(ui->createFileButton, &QPushButton::clicked, this, &baseWidget::createNewFile);
@@ -41,6 +34,11 @@ baseWidget::~baseWidget()
     delete ui;
 }
 void baseWidget::cslot(){
+    QFile sqFile(ui->lineEdit->text()+".csv");
+    if(!sqFile.exists()){
+        qWarning()<<"File not exist, press button A";
+    }
+
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
     db.setConnectOptions("QSQLITE_ENABLE_REGEXP");
     db.setDatabaseName("TestDataBase");
@@ -65,7 +63,7 @@ void baseWidget::cslot(){
         qWarning()<<"query error"<<er.text();
     }
 
-    QFile sqFile(ui->lineEdit->text()+".csv");
+
     QTextStream qts(&sqFile);
     if(sqFile.open(QIODevice::ReadOnly)){
         qDebug()<<"All is OK";
@@ -85,10 +83,9 @@ void baseWidget::cslot(){
             if(!qr.exec(strTmp)){
                 QSqlError er = qr.lastError();
                 qWarning()<<"query error write"<<er.text();
+                break;
             }
             colNum++;
-
-
         }
        sqFile.close();
 
@@ -112,7 +109,6 @@ QString baseWidget::genRandomStr(){
         randStr[i] = random_num==1?randNum():randSumb();
     }
     return randStr;
-   // random_num = firs_value + rand() % last_value;
 }
 void baseWidget::createNewFile(){
     QFile newFile(ui->lineEdit->text()+".csv");
@@ -130,17 +126,9 @@ void baseWidget::createNewFile(){
         }
     }
     newFile.close();
-    ui->dirList->clear();
-    QDir curdir;
-    curdir.setPath(curdir.currentPath());
-    QFileInfoList list = curdir.entryInfoList();
-    foreach(QFileInfo info, list){
-        QString fileName = info.fileName();
-        ui->dirList->addItem(fileName);
-    }
 }
 void baseWidget::showFile(){
-    QString MyFileName = ui->dirList->currentText();
+    QString MyFileName = ui->lineEdit->text()+".csv";
     QFile ourFile;
     ourFile.setFileName(MyFileName);
     if(!ourFile.open(QIODevice::ReadWrite))
@@ -181,13 +169,4 @@ void baseWidget::showFile(){
         }
     }
     newFile.close();
-}
-void baseWidget::listFile(){
-    QDir curdir;
-    curdir.setPath(curdir.currentPath());
-    QFileInfoList list = curdir.entryInfoList();
-    foreach(QFileInfo info, list){
-        QString fileName = info.fileName();
-        ui->dirList->addItem(fileName);
-    }
 }

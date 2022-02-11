@@ -30,7 +30,6 @@ public:
 private slots:
     void showFile();
     void createNewFile();
-    void listFile();
     void cslot();
 private:
     QString directName;

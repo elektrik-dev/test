@@ -27,7 +27,6 @@ private:
     Ui::MainWindow *ui;
     QTcpServer *myServ;
     int i;
-    QFile *newFile;
     quint64 messageSize;
 };
 

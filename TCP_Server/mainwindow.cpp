@@ -19,7 +19,6 @@ MainWindow::MainWindow(QWidget *parent) :
         qDebug()<<"Server started";
     }
     connect(myServ, &QTcpServer::newConnection, this, &MainWindow::slotNewConnect);
-    newFile = new QFile("response.txt");
 }
 
 MainWindow::~MainWindow()
@@ -29,21 +28,32 @@ MainWindow::~MainWindow()
 void MainWindow::slotNewConnect(){
     QTcpSocket *sock = myServ->nextPendingConnection();
     connect(sock, &QTcpSocket::readyRead, this, &MainWindow::slotRead);
+    QFile newFile("response.txt");
     ui->messageHistory->append(QString("New connection from %1 at %2").arg(sock->peerAddress().toString()).arg(QTime::currentTime().toString()));
-    if(!newFile->open(QIODevice::ReadOnly))
+
+    QTextStream messege(&newFile);
+    if(!newFile.open(QIODevice::WriteOnly))
     {
-        ui->messageHistory->append(QString("File not %1 opened").arg(newFile->fileName()));
+        ui->messageHistory->append(QString("File not %1 opened").arg(newFile.fileName()));
         qDebug()<<"File not opened";
     }
+
+    messege<<QTime::currentTime().toString() + '\n';
+    newFile.close();
+
+    if(!newFile.open(QIODevice::ReadOnly)){
+        qDebug()<<"Error open";
+    }
+
     QByteArray arrF;
     QDataStream out(&arrF, QIODevice::WriteOnly);
-    out<<quint16(0)<<QTime::currentTime()<<newFile->fileName()<<newFile->readAll();
+    out<<quint16(0)<<QTime::currentTime()<<newFile.fileName()<<newFile.readAll();
     out.device()->seek(0);
     messageSize = quint64(static_cast<unsigned long>(arrF.size())- sizeof(quint16));
     ui->messageHistory->append(QString("Send %1 bytes").arg(messageSize));
     out<<quint16(static_cast<unsigned long>(arrF.size()) - sizeof(quint16));
     sock->write(arrF);
-    newFile->close();
+    newFile.close();
 
     connect(sock, &QTcpSocket::disconnected,sock, &QTcpSocket::deleteLater);
 }
